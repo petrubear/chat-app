@@ -11,9 +11,19 @@ const io = socketio(server);
 const staticFolder = path.join(__dirname, '../public');
 app.use(express.static(staticFolder));
 
-io.on('connection', () => {
+let count = 0;
+io.on('connection', (socket) => {
     console.log('new websocket connection');
+    socket.emit('countUpdated', count);
+
+    socket.on('increment', () => {
+        count++;
+        // socket.emit('countUpdated', count); // notifica a uno
+        io.emit('countUpdated', count); // notifica a todos
+    });
 });
+
+
 
 server.listen(port, () => {
     console.log(`listening on port ${port}`);
