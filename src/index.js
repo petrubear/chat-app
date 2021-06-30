@@ -1,16 +1,20 @@
 const express = require('express');
+const socketio = require('socket.io');
+const http = require('http');
 const path = require('path');
 
 const port = process.env.PORT;
 const app = express();
+const server = http.createServer(app);
+const io = socketio(server);
 
 const staticFolder = path.join(__dirname, '../public');
 app.use(express.static(staticFolder));
 
-app.get('', (req, res) => {
-    res.render('index');
+io.on('connection', () => {
+    console.log('new websocket connection');
 });
 
-app.listen(port, () => {
-    console.log('listening on port', port)
+server.listen(port, () => {
+    console.log(`listening on port ${port}`);
 });
