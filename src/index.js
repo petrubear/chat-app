@@ -10,12 +10,13 @@ const port = process.env.PORT;
 const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
+const admin = 'Admin';
 
 const staticFolder = path.join(__dirname, '../public');
 app.use(express.static(staticFolder));
 
 io.on('connection', (socket) => {
-    console.log('==> New websocket connection');
+    console.log('New websocket connection');
 
     // socket.emit('message', generateMessage('Welcome!'));
     // socket.broadcast.emit('message', 'A new user has joined!');
@@ -33,9 +34,9 @@ io.on('connection', (socket) => {
 
         socket.join(user.room);
 
-        socket.emit('message', generateMessage('Welcome!'));
+        socket.emit('message', generateMessage(admin, 'Welcome!'));
         socket.broadcast.to(user.room).emit('message',
-            generateMessage(`${user.username} has joined!`));
+            generateMessage(admin, `${user.username} has joined!`));
 
         callback();
     });
@@ -46,21 +47,23 @@ io.on('connection', (socket) => {
         if (filter.isProfane(message)) {
             return callback('Profanity is not allowed!');
         } else {
-            io.to('test').emit('message', generateMessage(message));
+            const user = getUser(socket.id);
+            io.to(user.room).emit('message', generateMessage(user.username, message));
             callback();
         }
     });
 
     socket.on('sendLocation', (coords, callback) => {
-        io.emit('locationMessage',
-            generateLocationMessage(`https://google.com/maps?q=${coords.latitude},${coords.longitude}`));
+        const user = getUser(socket.id);
+        io.to(user.room).emit('locationMessage',
+            generateLocationMessage(user.username, `https://google.com/maps?q=${coords.latitude},${coords.longitude}`));
         callback();
     });
 
     socket.on('disconnect', () => {
         const user = removeUser(socket.id);
         if (user) {
-            io.to(user.room).emit('message', generateMessage(`${user.username} has left!`));
+            io.to(user.room).emit('message', generateMessage(admin, `${user.username} has left!`));
         }
     });
 });
